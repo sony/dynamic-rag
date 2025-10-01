@@ -67,6 +67,30 @@ For full license details, see [`LICENSE`](LICENSE).
 
 ---
 
+## Developer Guidelines
+
+### Code Quality and Testing
+- **Unit Tests**: All unit tests must pass locally prior to submitting merge requests and pull requests
+- **Testing Framework**: Comprehensive unit tests are available in the `Tests/ServerTests/` directory
+- **Pre-commit Requirements**: Ensure all tests pass before committing changes
+
+### Support and Collaboration
+- **Issue Support**: Sony Pictures Entertainment does not provide an SLA for responding to issues, bug reports, or feature requests
+- **External Collaboration**: External collaboration and contributions are encouraged and welcome
+- **Community Guidelines**: Please follow standard open-source collaboration practices when contributing
+
+### Infrastructure and Deployment
+- **Cloud Provider Support**: Build scripts and deployment configurations for AWS, GCP, Oracle Cloud, and Azure are encouraged contributions but not provided by default
+- **Custom Deployments**: Users are encouraged to create and share deployment scripts for their preferred cloud providers
+- **Infrastructure as Code**: Contributions of Terraform, CloudFormation, or other IaC templates are welcome
+
+### Development Standards
+- **Code Review**: All changes should be reviewed through the standard pull request process
+- **Documentation**: Update relevant documentation when making changes to APIs or functionality
+- **Backward Compatibility**: Consider backward compatibility when making breaking changes
+
+---
+
 ## Developers
 
 Bryan Bednarski - core services including text-to-text, text-to-image, and image-to-image retrieval. Server, Frontend, and Unit Testing Framework
