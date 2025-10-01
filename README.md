@@ -71,7 +71,7 @@ For full license details, see [`LICENSE`](LICENSE).
 
 ### Code Quality and Testing
 - **Unit Tests**: All unit tests must pass locally prior to submitting merge requests and pull requests
-- **Testing Framework**: Comprehensive unit tests are available in the `Tests/ServerTests/` directory
+- **Testing Framework**: Comprehensive tests covering all 19 API endpoints are documented in the [Server Integration Tests README](./Tests/ServerTests/README.md)
 - **Pre-commit Requirements**: Ensure all tests pass before committing changes
 
 ### Support and Collaboration
