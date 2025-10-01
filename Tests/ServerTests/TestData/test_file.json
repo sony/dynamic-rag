@@ -1,0 +1,43 @@
+{
+    "project": {
+      "name": "Prompt-o-thon #2",
+      "description": "A hackathon event aimed at creating innovative solutions using prompt-based AI tools.",
+      "participants": [
+        {
+          "name": "User 2",
+          "submission": {
+            "title": "SPE Title/Property by Ambiguous Entity AI Search",
+            "description": "A tool to search and identify Sony Pictures Entertainment properties based on ambiguous, vague, or specific data.",
+            "modules": [
+              {
+                "name": "LLM Modules",
+                "description": "Language model modules for processing text."
+              },
+              {
+                "name": "Prompt Modules",
+                "description": "Modules for generating and handling prompts."
+              }
+            ]
+          }
+        },
+        {
+          "name": "User 1",
+          "submission": {
+            "title": "Search Prompt Flow",
+            "description": "A search tool that filters and formats results from Bing, keeping only relevant columns with valid dates.",
+            "results": [
+              {
+                "title": "The Amazing Spider-Man 2",
+                "date": "2024-12-16T00:25:00"
+              },
+              {
+                "title": "Venom",
+                "date": "2024-12-15T06:16:00"
+              }
+            ]
+          }
+        }
+      ],
+      "conclusion": "We are excited to see the innovative solutions and projects that will emerge from Prompt-o-thon #2. Remember to leverage the resources available to you, collaborate with your peers, and most importantly, have fun! Happy hacking!"
+    }
+  }

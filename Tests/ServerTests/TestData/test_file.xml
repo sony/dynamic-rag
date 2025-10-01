@@ -1,0 +1,27 @@
+<project>
+  <name>Sample Project</name>
+  <version>1.0.0</version>
+  <description>This is a sample JSON file</description>
+  <author>
+    <firstName>Jane</firstName>
+    <lastName>Doe</lastName>
+    <email>jane.doe@example.com</email>
+  </author>
+  <settings>
+    <theme>dark</theme>
+    <language>en</language>
+    <autosave>true</autosave>
+  </settings>
+  <items>
+    <item>
+      <id>1</id>
+      <title>First Item</title>
+      <status>active</status>
+    </item>
+    <item>
+      <id>2</id>
+      <title>Second Item</title>
+      <status>inactive</status>
+    </item>
+  </items>
+</project>

@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-black text-white font-mono antialiased;
+  }
+}
+
+:root {
+  --background: 0 0% 7%;
+  --foreground: 0 0% 98%;
+  
+  --card: 0 0% 12%;
+  --card-foreground: 0 0% 98%;
+  
+  --popover: 0 0% 12%;
+  --popover-foreground: 0 0% 98%;
+  
+  --primary: 120 100% 25%;
+  --primary-foreground: 0 0% 98%;
+  
+  --secondary: 120 63% 31%;
+  --secondary-foreground: 0 0% 98%;
+  
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 65%;
+  
+  --accent: 120 92% 40%;
+  --accent-foreground: 0 0% 98%;
+  
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 0 0% 98%;
+  
+  --border: 120 63% 31%;
+  --input: 120 63% 31%;
+  --ring: 120 92% 40%;
+
+  --radius: 0px;
+}
+
+.font-mono {
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* Matrix-like cursor animation */
+.cursor-blink::after {
+  content: '|';
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(0 0% 12%);
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(120 63% 31%);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(120 92% 40%);
+}
+
+/* Matrix theme class */
+.matrix-overlay {
+  position: relative;
+}
