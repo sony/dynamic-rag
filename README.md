@@ -1,4 +1,4 @@
-# Dynamic Retreival Augmented Generation
+# Dynamic Retrieval Augmented Generation
 
 This project provides a database driver (dotnet) and frontend (react) for a retrieval augmented generative database in PostgreSQL. It is required that the postgres server and database are created in advance of running the driver, but the driver will maintain the schema, model registrations to collections, and ingestion/retrieval of embeddings to the collections. 
 
