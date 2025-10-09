@@ -1,0 +1,45 @@
+**Applying Dynamic RAG to Media Usecases**
+
+This document provides examples of how this system has been applied across different media and data domains for multimodal retrieval and generation workflows. These use cases demonstrate the practical benefits of multimodal embeddings, dynamic schema management, and recursive ingestion for scalable content workflows.
+
+
+**1. AVOD channel content aggregation and discovery**
+
+Objective:
+
+Transform content discovery for marketing and content teams identify optimal scenes across film and TV assets for use in channel-specific programming.
+
+Application:
+
+Dynamic RAG’s text and image embeddings enabled channel managers of an AVOD platform to semantically search across video transcripts to retrieve timestamps for relevant clips. Channel managers could query in natural language (e.g. “most emotional confrontation” or “humorous blooper moments”), and the system surfaced matching clip segments based on the semantic meaning of the transcript.
+
+In addition, Dynamic RAG supported text-to-image retrieval for movie posters and thumbnails, performing text-to-image retrieval to surface relevant images to use as promotional metadata or visual assets.
+
+Technical Flow:
+
+Video transcripts were parsed and indexed using text embeddings for semantic search, enabling retrieval of relevant clip timestamps from natural-language queries. Image collections of posters and thumbnails were separately embedded to support text-to-image matching. Results returned both transcript segments and associated visual assets for downstream content packaging.
+
+Broader Applications:
+
+Cross-modality search: By extending Dynamic RAG to support embeddings and retrieval of additional modalities (e.g. audio), more robust search can be performed to retrieve assets of various modalities, offering applications to audio and text-based content platforms.
+
+**2. Script and Manuscript Summarization & Q&A**
+
+Objective: 
+
+Enable script analysis teams to efficiently read, analyze, and explore long-form scripts and manuscripts—scaling to hundreds of pages and arbitrary document lengths.
+
+Application:
+
+Script files were ingested into text embedding collections, indexed, and made available for summarization, querying, and cross-comparison. This enabled both inter- and intra-document analysis, such as identifying  themes, relationships and story arcs.
+
+E.g. “List all scenes where Character A and Character B discuss the story’s main antagonist.”
+
+Technical Flow:
+
+Scripts were ingested and embedded with automatic chunking, then retrieved through hybrid search combining lexical and semantic scoring. For summarization tasks, queries were executed through the chat-based frontend, where summaries were generated using recursive windowing. A conversational layer provided an interactive interface for users to explore the text dynamically, with retrieved snippets passed to a generative model for summarization and contextual responses.
+
+
+Broader Applications:
+
+Arbitrary-length summarization: This technology can be extended to any long-form text (e.g. books, transcripts, etc.) for consistent and context-aware summarization that preserves continuity across the entirety of the work, enabling scalable summarization and analysis.
