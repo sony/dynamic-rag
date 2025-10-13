@@ -1,0 +1,53 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+        "title": "${app_name}",
+        "description": "",
+        "version": "1.0"
+    },
+    "servers": [],
+    "paths": {
+        "/*": {
+            "get": {
+                "summary": "${app_name}_GET",
+                "operationId": "669fdabe6d7b577740c751a9",
+                "responses": {
+                    "200": {
+                        "description": null
+                    }
+                }
+            },
+            "post": {
+                "summary": "${app_name}_POST",
+                "operationId": "669fdabe0aef5d6fc5dde471",
+                "responses": {
+                    "200": {
+                        "description": null
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "apiKeyHeader": {
+                "type": "apiKey",
+                "name": "Ocp-Apim-Subscription-Key",
+                "in": "header"
+            },
+            "apiKeyQuery": {
+                "type": "apiKey",
+                "name": "subscription-key",
+                "in": "query"
+            }
+        }
+    },
+    "security": [
+        {
+            "apiKeyHeader": []
+        },
+        {
+            "apiKeyQuery": []
+        }
+    ]
+}
