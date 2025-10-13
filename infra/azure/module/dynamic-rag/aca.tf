@@ -245,7 +245,7 @@ resource "azurerm_api_management_api" "rag-backend-api" {
 
   import {
     content_format = "openapi"
-    content_value  = templatefile("./modules/advtech-azure-apim/app_openapi_template.json", {app_name = azurerm_container_app.backend.name})
+    content_value  = templatefile("./module/dynamic-rag/openapi_template.json", {app_name = azurerm_container_app.backend.name})
   }
   #depends_on = [ azurerm_api_management_backend.example ]
 }
