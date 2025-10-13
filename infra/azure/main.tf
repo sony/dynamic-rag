@@ -27,7 +27,7 @@ resource "azurerm_container_registry" "acr" {
 # Azure API Management
 ################################################
 
-resource "azurerm_api_management" "spe-dev-apim" {
+resource "azurerm_api_management" "api-management" {
    name                = "${var.env}-apim"
    location            = azurerm_resource_group.rg.location
    resource_group_name = azurerm_resource_group.rg.name
