@@ -5,7 +5,7 @@ module "dynamic-rag" {
   key_vault                  = azurerm_key_vault.vault
   resource_group             = azurerm_resource_group.rg
   azurerm_container_registry = azurerm_container_registry.acr
-  api_management             = azurerm_api_management.spe-dev-apim
+  api_management             = azurerm_api_management.api-management
   container_app_env          = azurerm_container_app_environment.aca-env
 
   # database credentials
