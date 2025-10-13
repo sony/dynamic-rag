@@ -35,7 +35,7 @@ resource "azurerm_postgresql_flexible_server_configuration" "allow_vector" {
 }
 
 # 4️⃣ Firewall rules for your server
-resource "azurerm_postgresql_flexible_server_firewall_rule" "spe_vpn_ip_ranges" {
+resource "azurerm_postgresql_flexible_server_firewall_rule" "ip_ranges" {
   for_each        = { for idx, rule in var.firewall_rules : idx => rule }
   name            = "firewall-rule-${each.key}"
   server_id       = azurerm_postgresql_flexible_server.server.id
