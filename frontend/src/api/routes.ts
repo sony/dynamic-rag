@@ -1,5 +1,7 @@
 import type { Express } from "express";
-import { createServer, type Server } from "http";
+import { createServer as createHttpServer, type Server } from "http";
+import { createServer as createHttpsServer } from "https";
+import { readFileSync } from "fs";
 import { storage } from "./storage";
 
 // Define a middleware to handle API requests when running in development mode
@@ -122,7 +124,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create mock API endpoints
   createMockApiMiddleware(app);
 
-  const httpServer = createServer(app);
+  const tlsCert = process.env.TLS_CERT_PATH;
+  const tlsKey = process.env.TLS_KEY_PATH;
+
+  let httpServer: Server;
+  if (tlsCert && tlsKey) {
+    httpServer = createHttpsServer(
+      { cert: readFileSync(tlsCert), key: readFileSync(tlsKey) },
+      app
+    ) as unknown as Server;
+  } else {
+    console.warn("TLS_CERT_PATH / TLS_KEY_PATH not set — falling back to HTTP (development only)");
+    httpServer = createHttpServer(app);
+  }
 
   return httpServer;
 }

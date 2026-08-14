@@ -65,9 +65,13 @@ export async function setupVite(app: Express, server: Server) {
       return next();
     }
 
-    const url = req.originalUrl;
-
     try {
+      // Reject URLs containing characters that could enable XSS
+      if (/[<>"'`]/.test(req.originalUrl)) {
+        res.status(400).end("Bad Request");
+        return;
+      }
+
       // Look for index.html in the project root
       const indexPath = path.resolve(process.cwd(), "index.html");
       
@@ -77,7 +81,8 @@ export async function setupVite(app: Express, server: Server) {
         `src="./src/main.tsx"`,
         `src="./src/main.tsx?v=${nanoid()}"`,
       );
-      const page = await vite.transformIndexHtml(url, template);
+      // Use "/" as the URL context — all SPA routes serve the same index.html
+      const page = await vite.transformIndexHtml("/", template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);

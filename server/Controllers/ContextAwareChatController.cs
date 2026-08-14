@@ -40,13 +40,14 @@ namespace PgVectorDynamicRAG.Controllers
         {
             try
             {
+                var safeCollectionName = SqlIdentifierValidator.Validate(request.collectionName, nameof(request.collectionName));
                 var startTime = DateTime.UtcNow;
 
                 Dictionary<string, object> result = new Dictionary<string, object>();
 
                 ContextAwareChatResponse chatResult = await _contextAwareChatService.ChatWithFixedCollectionAsync(
                                                                                                                 request.query,
-                                                                                                                request.collectionName,
+                                                                                                                safeCollectionName,
                                                                                                                 request.nResults,
                                                                                                                 request.chatModelName,
                                                                                                                 request.alpha,

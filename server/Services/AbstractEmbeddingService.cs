@@ -198,7 +198,7 @@ namespace PgVectorDynamicRAG.Services
                 // Use the new GetAllRecordsAsync method to iterate over records.
                 var keysToDelete = new List<Guid>();
 
-                // Use a SQL query to get keys where the "relativeFilePath" column equals the relativeFilePath parameter.
+                SqlIdentifierValidator.Validate(collectionName, nameof(collectionName));
                 var sql = $@"
                     SELECT ""Key""
                     FROM ""{collectionName}""

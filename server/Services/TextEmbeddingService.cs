@@ -861,6 +861,7 @@ namespace PgVectorDynamicRAG.Services
             double? decayImpact = 0.01,
             CancellationToken cancellationToken = default)
         {
+            SqlIdentifierValidator.Validate(collectionName, nameof(collectionName));
             var top = nResults ?? 10;
 
             // Parse the query into terms
@@ -1102,6 +1103,7 @@ namespace PgVectorDynamicRAG.Services
                                                                         double? decayImpact = 0.01,
                                                                         CancellationToken cancellationToken = default)
         {
+            SqlIdentifierValidator.Validate(collectionName, nameof(collectionName));
             var top = nResults ?? 10;
 
             IEmbeddingGenerator<string, Embedding<float>> textEmbeddingService;

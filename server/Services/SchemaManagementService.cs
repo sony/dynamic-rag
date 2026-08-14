@@ -1,6 +1,7 @@
 using Npgsql;
 using ModelContextProtocol.Server;
 using System.ComponentModel;
+using PgVectorDynamicRAG.Data;
 
 namespace PgVectorDynamicRAG.Services
 {
@@ -35,11 +36,11 @@ namespace PgVectorDynamicRAG.Services
         /// <returns></returns>
         public async Task<bool> CheckFileExistsInCollection(string fileName, string collectionName, CancellationToken cancellationToken = default)
         {
-            // First, check that the collection exists
+            SqlIdentifierValidator.Validate(collectionName, nameof(collectionName));
             var sql = $@"
                 SELECT EXISTS(
                     SELECT 1
-                    FROM {collectionName}
+                    FROM ""{collectionName}""
                     WHERE ""FileName"" = @fileName
                 );
             ";
@@ -242,9 +243,7 @@ namespace PgVectorDynamicRAG.Services
         /// <returns></returns>
         public async Task<bool> DeleteCollectionFromSchema(string collectionName, CancellationToken cancellationToken = default)
         {
-            // WARNING:
-            // Table names cannot be passed as parameters. Ensure that collectionName is safe
-            // (for example, by validating it against a whitelist or sanitizing it) to avoid SQL injection.
+            SqlIdentifierValidator.Validate(collectionName, nameof(collectionName));
             var sql = $@"DROP TABLE IF EXISTS ""{collectionName}"";";
 
             try
