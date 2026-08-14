@@ -3,13 +3,16 @@ import { registerRoutes } from "./api/routes";
 import { setupVite, serveStatic, log } from "./vite";
 import cors from "cors"; // Add this import
 import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
 
 dotenv.config(); // This ensures your process.env has access to variables in .env file
 
 const app = express();
+app.disable("x-powered-by");
 app.use(cors({ origin: "*" })); // Enable CORS for all origins
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(rateLimit({ windowMs: 60 * 1000, max: 100 }));
 
 app.get("/api/config", (_req: Request, res: Response) => {
   // console.log("Inside app.get /api/config");
@@ -76,6 +79,7 @@ app.use((req, res, next) => {
   const host = '0.0.0.0';  // Try using '127.0.0.1' instead of '0.0.0.0'
 
   server.listen(port, host, () => {
-    log(`frontend server running on http://${host}:${port}`);
+    const protocol = process.env.TLS_CERT_PATH ? "https" : "http";
+    log(`frontend server running on ${protocol}://${host}:${port}`);
   });
 })();

@@ -671,6 +671,7 @@ namespace PgVectorDynamicRAG.Services
         {
             try
             {
+                SqlIdentifierValidator.Validate(collectionName, nameof(collectionName));
                 _typedLogger.LogInformation("Starting image search on collection {CollectionName}", collectionName);
 
                 // Check if collection exists
@@ -882,6 +883,7 @@ namespace PgVectorDynamicRAG.Services
         {
             try
             {
+                SqlIdentifierValidator.Validate(collectionName, nameof(collectionName));
                 _typedLogger.LogInformation("Starting text-to-image search on collection {CollectionName}", collectionName);
 
                 // Check if collection exists

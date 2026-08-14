@@ -167,6 +167,7 @@ namespace PgVectorDynamicRAG.Services
                 //     ON {collectionName} USING btree(""EmbeddingServiceId"");
                 // ";
                 var initIndexSql = "";
+                SqlIdentifierValidator.Validate(collectionName, nameof(collectionName));
                 if (embeddingDimension > 2000)
                 {
                     // initIndexSql = $@"
@@ -265,7 +266,7 @@ namespace PgVectorDynamicRAG.Services
             try
             {
                 var updateIndexSql = $@"
-                        REINDEX INDEX hnsw_index_{collectionName};
+                        REINDEX INDEX hnsw_index_{SqlIdentifierValidator.Validate(collectionName, nameof(collectionName))};
                     ";
                 await using (var conn = _connectionFactory.CreateConnection())
                 {

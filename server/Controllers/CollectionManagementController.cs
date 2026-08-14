@@ -42,12 +42,13 @@ namespace PgVectorDynamicRAG.Controllers
         {
             try
             {
+                var safeCollectionName = SqlIdentifierValidator.Validate(request.collectionName, nameof(request.collectionName));
                 var startTime = DateTime.UtcNow;
 
                 Dictionary<string, object> result = await _collectionManagementService.CreateCollection(
                                                                                                     request.embeddingType,
                                                                                                     request.defaultEmbeddingModelName,
-                                                                                                    request.collectionName,
+                                                                                                    safeCollectionName,
                                                                                                     request.description ?? "",
                                                                                                     request.initHNSW,
                                                                                                     request.initBTree
@@ -84,9 +85,10 @@ namespace PgVectorDynamicRAG.Controllers
         {
             try
             {
+                var safeCollectionName = SqlIdentifierValidator.Validate(request.collectionName, nameof(request.collectionName));
                 var startTime = DateTime.UtcNow;
 
-                Dictionary<string, object> result = await _collectionManagementService.UpdateIndex(request.collectionName);
+                Dictionary<string, object> result = await _collectionManagementService.UpdateIndex(safeCollectionName);
 
                 var endTime = DateTime.UtcNow;
 
@@ -117,9 +119,10 @@ namespace PgVectorDynamicRAG.Controllers
         {
             try
             {
+                var safeCollectionName = SqlIdentifierValidator.Validate(request.collectionName, nameof(request.collectionName));
                 var startTime = DateTime.UtcNow;
 
-                Dictionary<string, object> result = await _collectionManagementService.DeleteCollection(request.collectionName,
+                Dictionary<string, object> result = await _collectionManagementService.DeleteCollection(safeCollectionName,
                                                                                                     request.deleteBlobs);
 
                 var endTime = DateTime.UtcNow;
@@ -168,12 +171,14 @@ namespace PgVectorDynamicRAG.Controllers
                     return BadRequest("Collection name is required");
                 }
 
+                var safeCollectionName = SqlIdentifierValidator.Validate(request.collectionName, nameof(request.collectionName));
+
                 // Determine the source type and process accordingly
                 if (request.file != null)
                 {
                     // Case 1: File was uploaded directly
                     result = await _collectionManagementService.IngestUploadedFileAsync(
-                        request.collectionName,
+                        safeCollectionName,
                         request.chunkSize,
                         request.chunkOverlapFraction,
                         request.file,
@@ -184,7 +189,7 @@ namespace PgVectorDynamicRAG.Controllers
                 {
                     // Case 2: Local file path on server was provided
                     result = await _collectionManagementService.IngestLocalFileAsync(
-                        request.collectionName,
+                        safeCollectionName,
                         request.chunkSize,
                         request.chunkOverlapFraction,
                         request.filePath,
@@ -240,12 +245,14 @@ namespace PgVectorDynamicRAG.Controllers
                     return BadRequest("Collection name is required");
                 }
 
+                var safeCollectionName = SqlIdentifierValidator.Validate(request.collectionName, nameof(request.collectionName));
+
                 // Determine the source type and process accordingly
                 if (request.content != null)
                 {
                     // Case 1: File was uploaded directly
                     result = await _collectionManagementService.NewTextMemoryAsync(
-                        request.collectionName,
+                        safeCollectionName,
                         request.chunkSize,
                         request.chunkOverlapFraction,
                         request.content,
@@ -287,10 +294,11 @@ namespace PgVectorDynamicRAG.Controllers
         {
             try
             {
+                var safeCollectionName = SqlIdentifierValidator.Validate(request.collectionName, nameof(request.collectionName));
                 var startTime = DateTime.UtcNow;
 
                 Dictionary<string, object> result = await _collectionManagementService.RemoveFileFromCollectionAsync(request.pathInContainer,
-                                                                                                                    request.collectionName,
+                                                                                                                    safeCollectionName,
                                                                                                                     request.isBlobFile
                                                                                                                     );
 
@@ -321,13 +329,14 @@ namespace PgVectorDynamicRAG.Controllers
         {
             try
             {
+                var safeCollectionName = SqlIdentifierValidator.Validate(request.collectionName, nameof(request.collectionName));
                 var startTime = DateTime.UtcNow;
 
                 Dictionary<string, object> result = new Dictionary<string, object>();
 
                 List<EmbeddingSearchResult> searchResults = await _collectionManagementService.TextVectorSearchFixedCollectionAsync(
                                                                                                                     request.query,
-                                                                                                                    request.collectionName,
+                                                                                                                    safeCollectionName,
                                                                                                                     request.nResults,
                                                                                                                     request.timeWindowEnabled,
                                                                                                                     request.windowDays,
@@ -364,13 +373,14 @@ namespace PgVectorDynamicRAG.Controllers
         {
             try
             {
+                var safeCollectionName = SqlIdentifierValidator.Validate(request.collectionName, nameof(request.collectionName));
                 var startTime = DateTime.UtcNow;
 
                 Dictionary<string, object> result = new Dictionary<string, object>();
 
                 List<EmbeddingSearchResult> searchResults = await _collectionManagementService.TextSemanticSearchFixedCollectionAsync(
                                                                                                                     request.query,
-                                                                                                                    request.collectionName,
+                                                                                                                    safeCollectionName,
                                                                                                                     request.nResults,
                                                                                                                     request.timeWindowEnabled,
                                                                                                                     request.windowDays,
@@ -409,13 +419,14 @@ namespace PgVectorDynamicRAG.Controllers
         {
             try
             {
+                var safeCollectionName = SqlIdentifierValidator.Validate(request.collectionName, nameof(request.collectionName));
                 var startTime = DateTime.UtcNow;
 
                 Dictionary<string, object> result = new Dictionary<string, object>();
 
                 List<EmbeddingSearchResult> searchResults = await _collectionManagementService.TextSearchFixedCollectionAsync(
                                                                                                                     request.query,
-                                                                                                                    request.collectionName,
+                                                                                                                    safeCollectionName,
                                                                                                                     request.nResults,
                                                                                                                     request.alpha,
                                                                                                                     request.timeWindowEnabled,
@@ -455,13 +466,14 @@ namespace PgVectorDynamicRAG.Controllers
         {
             try
             {
+                var safeCollectionName = SqlIdentifierValidator.Validate(request.collectionName, nameof(request.collectionName));
                 var startTime = DateTime.UtcNow;
 
                 Dictionary<string, object> result = new Dictionary<string, object>();
 
                 List<EmbeddingSearchResult> searchResults = await _collectionManagementService.ImageSearchFixedCollectionAsync(
                                                                                                                     request.image,
-                                                                                                                    request.collectionName,
+                                                                                                                    safeCollectionName,
                                                                                                                     request.nResults,
                                                                                                                     request.timeWindowEnabled,
                                                                                                                     request.windowDays,
