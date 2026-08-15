@@ -63,7 +63,9 @@ namespace PgVectorDynamicRAG.Controllers
             {
                 var startTime = DateTime.UtcNow;
 
-                Dictionary<string, object> result = await _storageManagementService.DeleteCollectionBlobs(request.collectionName);
+                var safeCollectionName = SqlIdentifierValidator.Validate(request.collectionName, nameof(request.collectionName));
+
+                Dictionary<string, object> result = await _storageManagementService.DeleteCollectionBlobs(safeCollectionName);
                 
                 var endTime = DateTime.UtcNow;
 
@@ -88,7 +90,9 @@ namespace PgVectorDynamicRAG.Controllers
             {
                 var startTime = DateTime.UtcNow;
 
-                Dictionary<string, object> result = await _storageManagementService.DeleteSingleBlob(request.pathInContainer);
+                var safePathInContainer = StoragePathValidator.ValidateRelativePath(request.pathInContainer, nameof(request.pathInContainer));
+
+                Dictionary<string, object> result = await _storageManagementService.DeleteSingleBlob(safePathInContainer);
                 
                 var endTime = DateTime.UtcNow;
 
@@ -115,8 +119,11 @@ namespace PgVectorDynamicRAG.Controllers
             {
                 var startTime = DateTime.UtcNow;
 
-                Dictionary<string, object> uploadResult = await _storageManagementService.UploadSingleBlob(collectionName,
-                                                                                                        blobRelativePath,
+                var safeCollectionName = SqlIdentifierValidator.Validate(collectionName, nameof(collectionName));
+                var safeBlobRelativePath = StoragePathValidator.ValidateRelativePath(blobRelativePath, nameof(blobRelativePath));
+
+                Dictionary<string, object> uploadResult = await _storageManagementService.UploadSingleBlob(safeCollectionName,
+                                                                                                        safeBlobRelativePath,
                                                                                                         file);
                 
                 var endTime = DateTime.UtcNow;
@@ -144,7 +151,9 @@ namespace PgVectorDynamicRAG.Controllers
             {
                 var startTime = DateTime.UtcNow;
                 
-                Dictionary<string, object> uploadResult = await _storageManagementService.DownloadSingleBlob(request.pathInContainer.ToString());
+                var safePathInContainer = StoragePathValidator.ValidateRelativePath(request.pathInContainer.ToString(), nameof(request.pathInContainer));
+
+                Dictionary<string, object> uploadResult = await _storageManagementService.DownloadSingleBlob(safePathInContainer);
                 
                 var endTime = DateTime.UtcNow;
 

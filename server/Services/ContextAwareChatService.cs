@@ -178,11 +178,11 @@ namespace PgVectorDynamicRAG.Services
                 { "searchContext", searchContext }
             };
 
-            _logger.LogInformation("Invoking prompt response with chat model: {ChatModelName}", chatModelName);
+            _logger.LogInformation("Invoking prompt response with chat model: {ChatModelName}", LogSanitizer.Clean(chatModelName));
 
             // 4. Get the validated service ID for the chat model deployment name
             string validatedServiceId = await _schemaManagementService.getChatServiceId(chatModelName, cancellationToken);
-            _logger.LogInformation("Resolved chat model '{ChatModelName}' to service ID: {ServiceId}", chatModelName, validatedServiceId);
+            _logger.LogInformation("Resolved chat model '{ChatModelName}' to service ID: {ServiceId}", LogSanitizer.Clean(chatModelName), validatedServiceId);
 
             // 5. Get the specific chat service by the validated service ID
             var chatService = _kernel.GetRequiredService<IChatCompletionService>(validatedServiceId);

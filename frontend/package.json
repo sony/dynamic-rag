@@ -5,9 +5,10 @@
   "license": "MIT",
   "scripts": {
     "clean": "rm -rf dist",
-    "dev": "NODE_ENV=production tsx src/index.ts",
+    "dev": "NODE_ENV=production TLS_CERT_PATH=${TLS_CERT_PATH:-certs/dev-cert.pem} TLS_KEY_PATH=${TLS_KEY_PATH:-certs/dev-key.pem} tsx src/index.ts",
     "build": "npm run clean && vite build && esbuild src/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "start": "NODE_ENV=production node dist/index.js"
+    "start": "NODE_ENV=production node dist/index.js",
+    "certs:dev": "mkdir -p certs && openssl req -x509 -newkey rsa:2048 -nodes -sha256 -days 365 -keyout certs/dev-key.pem -out certs/dev-cert.pem -subj '/CN=localhost' -addext 'subjectAltName=DNS:localhost,IP:127.0.0.1'"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -49,8 +50,6 @@
     "cors": "^2.8.5",
     "date-fns": "^3.6.0",
     "dotenv": "^16.5.0",
-    "drizzle-orm": "^0.39.1",
-    "drizzle-zod": "^0.7.0",
     "embla-carousel-react": "^8.3.0",
     "express": "^4.21.2",
     "express-rate-limit": "^8.6.2",
@@ -98,7 +97,6 @@
     "@types/ws": "^8.5.13",
     "@vitejs/plugin-react": "^4.3.2",
     "autoprefixer": "^10.4.20",
-    "drizzle-kit": "^0.31.4",
     "esbuild": "^0.25.0",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.14",

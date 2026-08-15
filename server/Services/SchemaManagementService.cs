@@ -259,12 +259,12 @@ namespace PgVectorDynamicRAG.Services
                         int result = await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
                     }
                 }
-                _logger.LogInformation("Dropped table {CollectionName} from the scehema", collectionName);
+                _logger.LogInformation("Dropped table {CollectionName} from the scehema", LogSanitizer.Clean(collectionName));
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to drop table {CollectionName} from schema.", collectionName);
+                _logger.LogError(ex, "Failed to drop table {CollectionName} from schema.", LogSanitizer.Clean(collectionName));
                 return false;
             }
         }

@@ -83,7 +83,10 @@ const SidebarProvider = React.forwardRef<
         _setOpen(value)
 
         // This sets the cookie to keep the sidebar state.
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${open}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+        // SameSite=Lax blocks cross-site submission; Secure is added when served over HTTPS
+        // (omitted on plain-HTTP localhost, where browsers would otherwise reject the cookie).
+        const secureAttr = window.location.protocol === "https:" ? "; Secure" : ""
+        document.cookie = `${SIDEBAR_COOKIE_NAME}=${open}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}; SameSite=Lax${secureAttr}`
       },
       [setOpenProp, open]
     )

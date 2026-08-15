@@ -7,9 +7,17 @@ import rateLimit from 'express-rate-limit';
 
 dotenv.config(); // This ensures your process.env has access to variables in .env file
 
+// Origins permitted to call this server cross-origin. Driven by CORS_ALLOWED_ORIGINS
+// (comma-separated) and falling back to the local development hosts, so that a deployment
+// never silently accepts requests from any origin.
+const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
+  ?.split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean) ?? ["https://localhost:3000", "http://localhost:5272"];
+
 const app = express();
 app.disable("x-powered-by");
-app.use(cors({ origin: "*" })); // Enable CORS for all origins
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(rateLimit({ windowMs: 60 * 1000, max: 100 }));
@@ -79,7 +87,6 @@ app.use((req, res, next) => {
   const host = '0.0.0.0';  // Try using '127.0.0.1' instead of '0.0.0.0'
 
   server.listen(port, host, () => {
-    const protocol = process.env.TLS_CERT_PATH ? "https" : "http";
-    log(`frontend server running on ${protocol}://${host}:${port}`);
+    log(`frontend server running on https://${host}:${port}`);
   });
 })();

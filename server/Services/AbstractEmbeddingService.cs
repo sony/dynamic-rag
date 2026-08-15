@@ -168,7 +168,7 @@ namespace PgVectorDynamicRAG.Services
                 // If this is a blob file, also delete it from blob storage
                 if (isBlobFile)
                 {
-                    _logger.LogInformation("Deleting blob file: {relativeFilePath} from collection: {CollectionName}", filePath, collectionName);
+                    _logger.LogInformation("Deleting blob file: {relativeFilePath} from collection: {CollectionName}", LogSanitizer.Clean(filePath), LogSanitizer.Clean(collectionName));
                     
                     // Delete the blob from storage
                     // relativeFilePath = "/Test/test_file.txt"
@@ -176,11 +176,11 @@ namespace PgVectorDynamicRAG.Services
                     var status = await _storageManagementService.DeleteSingleBlob(blobRelativePath);
                     if (status.TryGetValue("deleted", out var deleted) && status.TryGetValue("pathInContainer", out var pathInContainer))
                     {
-                        _logger.LogInformation("Successfully ({Deleted}) deleted blob: {BlobPath}", deleted, pathInContainer);
+                        _logger.LogInformation("Successfully ({Deleted}) deleted blob: {BlobPath}", deleted, LogSanitizer.Clean(pathInContainer?.ToString()));
                     }
                     else
                     {
-                        _logger.LogWarning("Failed to retrieve deletion status or path for blob: {BlobRelativePath}", blobRelativePath);
+                        _logger.LogWarning("Failed to retrieve deletion status or path for blob: {BlobRelativePath}", LogSanitizer.Clean(blobRelativePath));
                     }
                 }
 
@@ -193,7 +193,7 @@ namespace PgVectorDynamicRAG.Services
                     throw new InvalidOperationException($"RemoveFileFromCollectionAsync error: collection {collectionName} does not exist.");
                 }
 
-                _logger.LogInformation("Searching for records in {CollectionName} with file name: {FilePath}...", collectionName, filePath);
+                _logger.LogInformation("Searching for records in {CollectionName} with file name: {FilePath}...", LogSanitizer.Clean(collectionName), LogSanitizer.Clean(filePath));
 
                 // Use the new GetAllRecordsAsync method to iterate over records.
                 var keysToDelete = new List<Guid>();
@@ -346,7 +346,7 @@ namespace PgVectorDynamicRAG.Services
         /// <returns>Dictionary with operation results</returns>
         protected async Task SaveFileToBlobStorageAsync(string filePath, string blobPath)
         {
-            _logger.LogInformation("Saving file to storage: {BlobPath}", blobPath);
+            _logger.LogInformation("Saving file to storage: {BlobPath}", LogSanitizer.Clean(blobPath));
             
             try
             {
@@ -377,11 +377,11 @@ namespace PgVectorDynamicRAG.Services
                     await _storageManagementService.SaveFileStreamToStorage(blobPath, fileStream, contentType);
                 }
                 
-                _logger.LogInformation("Successfully saved file to storage: {BlobPath}", blobPath);
+                _logger.LogInformation("Successfully saved file to storage: {BlobPath}", LogSanitizer.Clean(blobPath));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to save file to storage: {BlobPath}", blobPath);
+                _logger.LogError(ex, "Failed to save file to storage: {BlobPath}", LogSanitizer.Clean(blobPath));
                 throw;
             }
         }
@@ -425,7 +425,7 @@ namespace PgVectorDynamicRAG.Services
                 bool collectionExists = await _schemaManagementService.CheckCollectionExists(collectionName);
                 if (!collectionExists)
                 {
-                    _logger.LogError($"Collection named {collectionName} does not exist.");
+                    _logger.LogError("Collection named {CollectionName} does not exist.", LogSanitizer.Clean(collectionName));
                     return false;
                 }
 
@@ -435,7 +435,7 @@ namespace PgVectorDynamicRAG.Services
 
                 if (embeddingServiceModality != expectedModality)
                 {
-                    _logger.LogError($"Collection {collectionName} has modality {embeddingServiceModality}, but expected {expectedModality}.");
+                    _logger.LogError("Collection {CollectionName} has modality {Modality}, but expected {ExpectedModality}.", LogSanitizer.Clean(collectionName), LogSanitizer.Clean(embeddingServiceModality), LogSanitizer.Clean(expectedModality));
                     return false;
                 }
 
@@ -443,7 +443,7 @@ namespace PgVectorDynamicRAG.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error validating collection modality for {collectionName}");
+                _logger.LogError(ex, "Error validating collection modality for {CollectionName}", LogSanitizer.Clean(collectionName));
                 return false;
             }
         }
