@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { createServer as createHttpServer, type Server } from "http";
+import type { Server } from "http";
 import { createServer as createHttpsServer } from "https";
 import { readFileSync } from "fs";
 import { storage } from "./storage";
@@ -127,16 +127,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const tlsCert = process.env.TLS_CERT_PATH;
   const tlsKey = process.env.TLS_KEY_PATH;
 
-  let httpServer: Server;
-  if (tlsCert && tlsKey) {
-    httpServer = createHttpsServer(
-      { cert: readFileSync(tlsCert), key: readFileSync(tlsKey) },
-      app
-    ) as unknown as Server;
-  } else {
-    console.warn("TLS_CERT_PATH / TLS_KEY_PATH not set — falling back to HTTP (development only)");
-    httpServer = createHttpServer(app);
+  // TLS is mandatory in every environment: there is deliberately no cleartext HTTP code path,
+  // so a missing or misconfigured certificate can never silently downgrade traffic. For local
+  // development run `npm run certs:dev` once to mint a self-signed pair.
+  if (!tlsCert || !tlsKey) {
+    throw new Error(
+      "TLS_CERT_PATH and TLS_KEY_PATH must be set; refusing to start without TLS. " +
+        "For local development run `npm run certs:dev`."
+    );
   }
 
-  return httpServer;
+  return createHttpsServer(
+    { cert: readFileSync(tlsCert), key: readFileSync(tlsKey) },
+    app
+  ) as unknown as Server;
 }

@@ -171,7 +171,7 @@ namespace PgVectorDynamicRAG.Services
                 };
 
                 // Upsert the record into the collection
-                _logger.LogInformation("Upserting image record into {CollectionName}...", collectionName);
+                _logger.LogInformation("Upserting image record into {CollectionName}...", LogSanitizer.Clean(collectionName));
                 await collection.UpsertAsync(record, cancellationToken);
 
                 // Clean up temporary files
@@ -193,7 +193,7 @@ namespace PgVectorDynamicRAG.Services
                     try
                     {
                         File.Delete(filePath);
-                        _logger.LogInformation("Deleted temporary file: {TempFilePath}", filePath);
+                        _logger.LogInformation("Deleted temporary file: {TempFilePath}", LogSanitizer.Clean(filePath));
                     }
                     catch (Exception ex)
                     {
@@ -1263,7 +1263,7 @@ namespace PgVectorDynamicRAG.Services
         //             try
         //             {
         //                 File.Delete(filePath);
-        //                 _typedLogger.LogInformation("Deleted temporary file: {TempFilePath}", filePath);
+        //                 _typedLogger.LogInformation("Deleted temporary file: {TempFilePath}", LogSanitizer.Clean(filePath));
         //             }
         //             catch (Exception ex)
         //             {

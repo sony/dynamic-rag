@@ -1,5 +1,6 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using PgVectorDynamicRAG.Data;
 
 namespace PgVectorDynamicRAG.Services
 {
@@ -48,7 +49,7 @@ namespace PgVectorDynamicRAG.Services
     {
         try
         {
-            _logger.LogInformation("Generating download URL for blob: {BlobPath}", pathInContainer);
+            _logger.LogInformation("Generating download URL for blob: {BlobPath}", LogSanitizer.Clean(pathInContainer));
             var containerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
             
             // Check if container exists
@@ -112,7 +113,7 @@ namespace PgVectorDynamicRAG.Services
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error generating download URL for blob: {BlobPath}", pathInContainer);
+            _logger.LogError(ex, "Error generating download URL for blob: {BlobPath}", LogSanitizer.Clean(pathInContainer));
             throw;
         }
     }
@@ -157,7 +158,7 @@ namespace PgVectorDynamicRAG.Services
                     
                     if (pathParts.Length < 2)
                     {
-                        _logger.LogWarning("Blob {BlobPath} does not follow the expected path format: /collection/filename", blobPath);
+                        _logger.LogWarning("Blob {BlobPath} does not follow the expected path format: /collection/filename", LogSanitizer.Clean(blobPath));
                         continue;
                     }
                     
@@ -204,7 +205,7 @@ namespace PgVectorDynamicRAG.Services
         {
             try
             {
-                _logger.LogInformation("Deleting all blobs for collection: {CollectionName}", collectionName);
+                _logger.LogInformation("Deleting all blobs for collection: {CollectionName}", LogSanitizer.Clean(collectionName));
                 
                 var containerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
                 
@@ -234,7 +235,7 @@ namespace PgVectorDynamicRAG.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting blobs for collection: {CollectionName}", collectionName);
+                _logger.LogError(ex, "Error deleting blobs for collection: {CollectionName}", LogSanitizer.Clean(collectionName));
                 throw;
             }
         }
@@ -248,7 +249,7 @@ namespace PgVectorDynamicRAG.Services
     {
         try
         {
-            _logger.LogInformation("Deleting blob: {BlobPath}", blobRelativePath);
+            _logger.LogInformation("Deleting blob: {BlobPath}", LogSanitizer.Clean(blobRelativePath));
             
             var containerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
             
@@ -290,7 +291,7 @@ namespace PgVectorDynamicRAG.Services
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting blob: {BlobPath}", blobRelativePath);
+            _logger.LogError(ex, "Error deleting blob: {BlobPath}", LogSanitizer.Clean(blobRelativePath));
             throw;
         }
     }
@@ -306,7 +307,7 @@ namespace PgVectorDynamicRAG.Services
         {
             try
             {
-                _logger.LogInformation("Uploading blob to collection: {CollectionName}, path: {BlobPath}", collectionName, blobRelativePath);
+                _logger.LogInformation("Uploading blob to collection: {CollectionName}, path: {BlobPath}", LogSanitizer.Clean(collectionName), LogSanitizer.Clean(blobRelativePath));
                 
                 var containerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
                 
@@ -316,11 +317,12 @@ namespace PgVectorDynamicRAG.Services
                     throw new InvalidOperationException($"Container '{_containerName}' does not exist. Containers must be created through IaC.");
                 }
                 
-                // Construct the full blob path
-                string sanitizedBlobRelativePath = blobRelativePath.StartsWith("/") ? blobRelativePath.Substring(1) : blobRelativePath;
-                sanitizedBlobRelativePath = sanitizedBlobRelativePath.EndsWith("/") ? sanitizedBlobRelativePath.Substring(0, sanitizedBlobRelativePath.Length - 1) : sanitizedBlobRelativePath;
-                string sanitizedFileName = file.FileName.StartsWith("/") ? file.FileName.Substring(1) : file.FileName;
-                sanitizedFileName = sanitizedFileName.EndsWith("/") ? sanitizedFileName.Substring(0, sanitizedFileName.Length - 1) : sanitizedFileName;
+                // Construct the full blob path. Both components are validated so that traversal
+                // segments cannot push the upload outside this collection's prefix.
+                string sanitizedBlobRelativePath = StoragePathValidator
+                    .ValidateRelativePath(blobRelativePath, nameof(blobRelativePath))
+                    .Trim('/');
+                string sanitizedFileName = StoragePathValidator.ValidateFileName(file.FileName, nameof(file.FileName));
                 string fullBlobPath = $"{collectionName}/{sanitizedBlobRelativePath}/{sanitizedFileName}";
                 // Get a reference to the blob
                 var blobClient = containerClient.GetBlobClient(fullBlobPath);
@@ -349,7 +351,7 @@ namespace PgVectorDynamicRAG.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error uploading blob to collection: {CollectionName}, path: {BlobPath}", collectionName, blobRelativePath);
+                _logger.LogError(ex, "Error uploading blob to collection: {CollectionName}, path: {BlobPath}", LogSanitizer.Clean(collectionName), LogSanitizer.Clean(blobRelativePath));
                 throw;
             }
         }
@@ -374,7 +376,7 @@ namespace PgVectorDynamicRAG.Services
         {
             try
             {
-                _logger.LogInformation("Saving file stream to blob storage: {BlobPath}", blobPath);
+                _logger.LogInformation("Saving file stream to blob storage: {BlobPath}", LogSanitizer.Clean(blobPath));
                 
                 var containerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
                 
@@ -406,7 +408,7 @@ namespace PgVectorDynamicRAG.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error saving file stream to blob storage: {BlobPath}", blobPath);
+                _logger.LogError(ex, "Error saving file stream to blob storage: {BlobPath}", LogSanitizer.Clean(blobPath));
                 throw;
             }
         }

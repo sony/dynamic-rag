@@ -1,5 +1,6 @@
 import express, { type Express } from "express";
 import cors from "cors";
+import rateLimit from "express-rate-limit";
 import fs from "fs";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
@@ -24,9 +25,20 @@ export function log(message: string, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
-// const allowedOrigins = ['http://localhost:3000', 'http://0.0.0.0:3000', 'http://localhost:5272', 'http://0.0.0.0:5272', "*"];
+// Origins permitted to make credentialed cross-origin requests. A wildcard cannot be used
+// together with `credentials: true`, so the list is driven by CORS_ALLOWED_ORIGINS
+// (comma-separated) and falls back to the local development hosts.
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS
+  ?.split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean)) ?? [
+  "http://localhost:3000",
+  "http://localhost:5272",
+];
 
-const allowedOrigins = ["*"];
+// Throttle the SPA/static handlers below: each one touches the filesystem per request,
+// so an unbounded request rate is a cheap denial-of-service vector.
+const staticContentLimiter = rateLimit({ windowMs: 60 * 1000, max: 300 });
 
 export async function setupVite(app: Express, server: Server) {
   // Apply CORS configuration
@@ -59,7 +71,7 @@ export async function setupVite(app: Express, server: Server) {
 
   app.use(vite.middlewares);
 
-  app.use("*", async (req, res, next) => {
+  app.use("*", staticContentLimiter, async (req, res, next) => {
     // Skip API routes- let them be handled by the backend server
     if (req.originalUrl.startsWith("/api")) {
       return next();
@@ -108,10 +120,10 @@ export function serveStatic(app: Express) {
     credentials: true
   }));
 
-  app.use(express.static(buildPath));
-  
+  app.use(staticContentLimiter, express.static(buildPath));
+
   // Serve index.html for all non-API routes (SPA fallback)
-  app.get("*", (req, res, next) => {
+  app.get("*", staticContentLimiter, (req, res, next) => {
     if (req.path.startsWith("/api")) {
       return next();
     }

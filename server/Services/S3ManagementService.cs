@@ -1,6 +1,7 @@
 using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.AspNetCore.Http;
+using PgVectorDynamicRAG.Data;
 
 namespace PgVectorDynamicRAG.Services
 {
@@ -69,7 +70,7 @@ namespace PgVectorDynamicRAG.Services
                         
                         if (pathParts.Length < 2)
                         {
-                            _logger.LogWarning("S3 object {ObjectKey} does not follow the expected path format: /collection/filename", objectKey);
+                            _logger.LogWarning("S3 object {ObjectKey} does not follow the expected path format: /collection/filename", LogSanitizer.Clean(objectKey));
                             continue;
                         }
                         
@@ -119,7 +120,7 @@ namespace PgVectorDynamicRAG.Services
         {
             try
             {
-                _logger.LogInformation("Deleting all objects for collection: {CollectionName}", collectionName);
+                _logger.LogInformation("Deleting all objects for collection: {CollectionName}", LogSanitizer.Clean(collectionName));
                 
                 // Check if bucket exists
                 if (!await ContainerExistsAsync())
@@ -167,7 +168,7 @@ namespace PgVectorDynamicRAG.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting objects for collection: {CollectionName}", collectionName);
+                _logger.LogError(ex, "Error deleting objects for collection: {CollectionName}", LogSanitizer.Clean(collectionName));
                 throw;
             }
         }
@@ -181,7 +182,7 @@ namespace PgVectorDynamicRAG.Services
         {
             try
             {
-                _logger.LogInformation("Deleting S3 object: {ObjectKey}", blobRelativePath);
+                _logger.LogInformation("Deleting S3 object: {ObjectKey}", LogSanitizer.Clean(blobRelativePath));
                 
                 // Check if bucket exists
                 if (!await ContainerExistsAsync())
@@ -193,7 +194,7 @@ namespace PgVectorDynamicRAG.Services
                 string sanitizedObjectKey = blobRelativePath.StartsWith("/") ? blobRelativePath.Substring(1) : blobRelativePath;
                 sanitizedObjectKey = sanitizedObjectKey.EndsWith("/") ? sanitizedObjectKey.Substring(0, sanitizedObjectKey.Length - 1) : sanitizedObjectKey;
                 
-                _logger.LogInformation("Attempting to delete S3 object at key: {ObjectKey}", sanitizedObjectKey);
+                _logger.LogInformation("Attempting to delete S3 object at key: {ObjectKey}", LogSanitizer.Clean(sanitizedObjectKey));
                 
                 // Check if object exists before attempting to delete
                 bool exists = await ObjectExistsAsync(sanitizedObjectKey);
@@ -209,11 +210,11 @@ namespace PgVectorDynamicRAG.Services
                     
                     await _s3Client.DeleteObjectAsync(deleteRequest);
                     deleted = true;
-                    _logger.LogInformation("S3 object successfully deleted: {ObjectKey}", sanitizedObjectKey);
+                    _logger.LogInformation("S3 object successfully deleted: {ObjectKey}", LogSanitizer.Clean(sanitizedObjectKey));
                 }
                 else
                 {
-                    _logger.LogWarning("S3 object not found for deletion: {ObjectKey}", sanitizedObjectKey);
+                    _logger.LogWarning("S3 object not found for deletion: {ObjectKey}", LogSanitizer.Clean(sanitizedObjectKey));
                 }
                 
                 return new Dictionary<string, object>
@@ -226,7 +227,7 @@ namespace PgVectorDynamicRAG.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting S3 object: {ObjectKey}", blobRelativePath);
+                _logger.LogError(ex, "Error deleting S3 object: {ObjectKey}", LogSanitizer.Clean(blobRelativePath));
                 throw;
             }
         }
@@ -242,7 +243,7 @@ namespace PgVectorDynamicRAG.Services
         {
             try
             {
-                _logger.LogInformation("Uploading file to S3 collection: {CollectionName}, path: {BlobPath}", collectionName, blobRelativePath);
+                _logger.LogInformation("Uploading file to S3 collection: {CollectionName}, path: {BlobPath}", LogSanitizer.Clean(collectionName), LogSanitizer.Clean(blobRelativePath));
                 
                 // Check if bucket exists
                 if (!await ContainerExistsAsync())
@@ -250,11 +251,12 @@ namespace PgVectorDynamicRAG.Services
                     throw new InvalidOperationException($"S3 bucket '{_containerName}' does not exist or is not accessible.");
                 }
                 
-                // Construct the full object key
-                string sanitizedBlobRelativePath = blobRelativePath.StartsWith("/") ? blobRelativePath.Substring(1) : blobRelativePath;
-                sanitizedBlobRelativePath = sanitizedBlobRelativePath.EndsWith("/") ? sanitizedBlobRelativePath.Substring(0, sanitizedBlobRelativePath.Length - 1) : sanitizedBlobRelativePath;
-                string sanitizedFileName = file.FileName.StartsWith("/") ? file.FileName.Substring(1) : file.FileName;
-                sanitizedFileName = sanitizedFileName.EndsWith("/") ? sanitizedFileName.Substring(0, sanitizedFileName.Length - 1) : sanitizedFileName;
+                // Construct the full object key. Both components are validated so that traversal
+                // segments cannot push the upload outside this collection's prefix.
+                string sanitizedBlobRelativePath = StoragePathValidator
+                    .ValidateRelativePath(blobRelativePath, nameof(blobRelativePath))
+                    .Trim('/');
+                string sanitizedFileName = StoragePathValidator.ValidateFileName(file.FileName, nameof(file.FileName));
                 string fullObjectKey = $"{collectionName}/{sanitizedBlobRelativePath}/{sanitizedFileName}";
                 
                 // Upload the file
@@ -287,7 +289,7 @@ namespace PgVectorDynamicRAG.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error uploading file to S3 collection: {CollectionName}, path: {BlobPath}", collectionName, blobRelativePath);
+                _logger.LogError(ex, "Error uploading file to S3 collection: {CollectionName}, path: {BlobPath}", LogSanitizer.Clean(collectionName), LogSanitizer.Clean(blobRelativePath));
                 throw;
             }
         }
@@ -301,7 +303,7 @@ namespace PgVectorDynamicRAG.Services
         {
             try
             {
-                _logger.LogInformation("Generating download URL for S3 object: {ObjectKey}", pathInContainer);
+                _logger.LogInformation("Generating download URL for S3 object: {ObjectKey}", LogSanitizer.Clean(pathInContainer));
                 
                 // Check if bucket exists
                 if (!await ContainerExistsAsync())
@@ -339,7 +341,7 @@ namespace PgVectorDynamicRAG.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error generating download URL for S3 object: {ObjectKey}", pathInContainer);
+                _logger.LogError(ex, "Error generating download URL for S3 object: {ObjectKey}", LogSanitizer.Clean(pathInContainer));
                 throw;
             }
         }
@@ -378,7 +380,7 @@ namespace PgVectorDynamicRAG.Services
         {
             try
             {
-                _logger.LogInformation("Saving file stream to S3 storage: {ObjectKey}", blobPath);
+                _logger.LogInformation("Saving file stream to S3 storage: {ObjectKey}", LogSanitizer.Clean(blobPath));
                 
                 // Check if bucket exists
                 if (!await ContainerExistsAsync())
@@ -410,7 +412,7 @@ namespace PgVectorDynamicRAG.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error saving file stream to S3 storage: {ObjectKey}", blobPath);
+                _logger.LogError(ex, "Error saving file stream to S3 storage: {ObjectKey}", LogSanitizer.Clean(blobPath));
                 throw;
             }
         }
@@ -461,7 +463,7 @@ namespace PgVectorDynamicRAG.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error checking if S3 object exists: {ObjectKey}", objectKey);
+                _logger.LogError(ex, "Error checking if S3 object exists: {ObjectKey}", LogSanitizer.Clean(objectKey));
                 return false;
             }
         }

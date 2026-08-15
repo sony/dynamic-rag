@@ -81,7 +81,7 @@ namespace PgVectorDynamicRAG.Services
             
             try
             {
-                _logger.LogInformation("Creating collection {CollectionName} with default embedding model {ModelName}", collectionName, defaultEmbeddingModelName);
+                _logger.LogInformation("Creating collection {CollectionName} with default embedding model {ModelName}", LogSanitizer.Clean(collectionName), LogSanitizer.Clean(defaultEmbeddingModelName));
                 
                 // Get the vector store from the kernel's DI container
                 var vectorStore = _kernel.GetRequiredService<VectorStore>();
@@ -118,7 +118,7 @@ namespace PgVectorDynamicRAG.Services
                 string modality = modelDetails.Modality;
                 string defaultDistanceMetric = modelDetails.DefaultSimilarityAlgo;
                 
-                _logger.LogInformation($"Glossary Type: {glossaryType}");
+                _logger.LogDebug("Glossary type resolved: {GlossaryType}", glossaryType.Name);
                 
                 // Create the collection using reflection to handle the generic type
                 MethodInfo? getCollectionMethod = vectorStore.GetType().GetMethod("GetCollection");
@@ -126,24 +126,24 @@ namespace PgVectorDynamicRAG.Services
                 {
                     throw new InvalidOperationException("GetCollection method not found on IVectorStore.");
                 }
-                _logger.LogInformation($"getCollectionMethod: {getCollectionMethod}");
+                _logger.LogDebug("Resolved VectorStore.GetCollection method");
                 
                 MethodInfo genericGetCollectionMethod = getCollectionMethod.MakeGenericMethod(typeof(Guid), glossaryType);
-                _logger.LogInformation($"genericGetCollectionMethod: {genericGetCollectionMethod}");
+                _logger.LogDebug("Constructed generic GetCollection method for {GlossaryType}", glossaryType.Name);
                 
                 var collection = genericGetCollectionMethod.Invoke(vectorStore, new object[] { collectionName, Type.Missing });
                 if (collection == null)
                 {
                     throw new InvalidOperationException("Failed to create collection instance.");
                 }
-                _logger.LogInformation($"collection: {collection}");
+                _logger.LogDebug("Instantiated collection of type {CollectionType}", collection.GetType().Name);
                 
                 MethodInfo? createMethod = collection.GetType().GetMethod("EnsureCollectionExistsAsync");
                 if (createMethod == null)
                 {
                     throw new InvalidOperationException("EnsureCollectionExistsAsync method not found on collection.");
                 }
-                _logger.LogInformation($"createMethod: {createMethod}");
+                _logger.LogDebug("Resolved EnsureCollectionExistsAsync method");
                 
                 await (Task)createMethod.Invoke(collection, new object[] { default(CancellationToken) });
                 
@@ -414,7 +414,7 @@ namespace PgVectorDynamicRAG.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error ingesting uploaded file into collection {CollectionName}", collectionName);
+                _logger.LogError(ex, "Error ingesting uploaded file into collection {CollectionName}", LogSanitizer.Clean(collectionName));
                 throw;
             }
         }
@@ -466,7 +466,7 @@ namespace PgVectorDynamicRAG.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error ingesting local file into collection {CollectionName}", collectionName);
+                _logger.LogError(ex, "Error ingesting local file into collection {CollectionName}", LogSanitizer.Clean(collectionName));
                 throw;
             }
         }
@@ -506,7 +506,7 @@ namespace PgVectorDynamicRAG.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error ingesting text content into collection {CollectionName}", collectionName);
+                _logger.LogError(ex, "Error ingesting text content into collection {CollectionName}", LogSanitizer.Clean(collectionName));
                 throw;
             }
         }
@@ -540,7 +540,7 @@ namespace PgVectorDynamicRAG.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error removing file {FileName} from collection {CollectionName}", fileName, collectionName);
+                _logger.LogError(ex, "Error removing file {FileName} from collection {CollectionName}", LogSanitizer.Clean(fileName), LogSanitizer.Clean(collectionName));
                 throw;
             }
         }
@@ -585,7 +585,7 @@ namespace PgVectorDynamicRAG.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error performing text search on collection {CollectionName}", collectionName);
+                _logger.LogError(ex, "Error performing text search on collection {CollectionName}", LogSanitizer.Clean(collectionName));
                 throw;
             }
         }
@@ -630,7 +630,7 @@ namespace PgVectorDynamicRAG.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error performing text search on collection {CollectionName}", collectionName);
+                _logger.LogError(ex, "Error performing text search on collection {CollectionName}", LogSanitizer.Clean(collectionName));
                 throw;
             }
         }
@@ -679,7 +679,7 @@ namespace PgVectorDynamicRAG.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error performing text search on collection {CollectionName}", collectionName);
+                _logger.LogError(ex, "Error performing text search on collection {CollectionName}", LogSanitizer.Clean(collectionName));
                 throw;
             }
         }
@@ -719,7 +719,7 @@ namespace PgVectorDynamicRAG.Services
                 
                 if (embeddingServiceModality != "ImageEmbedding")
                 {
-                    _logger.LogWarning("Image search is not supported for collection {CollectionName} with modality {Modality}", collectionName, embeddingServiceModality);
+                    _logger.LogWarning("Image search is not supported for collection {CollectionName} with modality {Modality}", LogSanitizer.Clean(collectionName), LogSanitizer.Clean(embeddingServiceModality));
                     throw new NotImplementedException("image-to-image search is only available for ImageEmbedding collections.");
                 }
                 
@@ -736,7 +736,7 @@ namespace PgVectorDynamicRAG.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error performing image search on collection {CollectionName}", collectionName);
+                _logger.LogError(ex, "Error performing image search on collection {CollectionName}", LogSanitizer.Clean(collectionName));
                 throw;
             }
         }

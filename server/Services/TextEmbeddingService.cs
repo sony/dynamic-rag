@@ -311,7 +311,7 @@ namespace PgVectorDynamicRAG.Services
                 }
 
                 // Upsert the chunk records into the collection
-                _logger.LogInformation("Upserting chunk records into {CollectionName}...", collectionName);
+                _logger.LogInformation("Upserting chunk records into {CollectionName}...", LogSanitizer.Clean(collectionName));
                 // var options = new UpsertRecordOptions();
                 // var upsertTasks = chunkingResult.chunkRecords.Select(r => (Task)collection.UpsertAsync(r, options, cancellationToken));
                 // await Task.WhenAll(upsertTasks);
@@ -332,16 +332,16 @@ namespace PgVectorDynamicRAG.Services
                     try
                     {
                         File.Delete(filePath);
-                        _logger.LogInformation("Deleted temporary file: {TempFilePath}", filePath);
+                        _logger.LogInformation("Deleted temporary file: {TempFilePath}", LogSanitizer.Clean(filePath));
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "Failed to delete temporary file: {TempFilePath}", filePath);
+                        _logger.LogWarning(ex, "Failed to delete temporary file: {TempFilePath}", LogSanitizer.Clean(filePath));
                     }
                 }
 
                 _logger.LogInformation("Successfully ingested {Count} chunks from file '{fileName}' into collection '{CollectionName}'.",
-                    chunkingResult.chunkRecords.Count, fileName, collectionName);
+                    chunkingResult.chunkRecords.Count, LogSanitizer.Clean(fileName), LogSanitizer.Clean(collectionName));
                 
                 resultsDictionary["success"] = true;
                 resultsDictionary["message"] = $"Successfully ingested {chunkingResult.chunkRecords.Count} chunks from file {fileName} into collection {collectionName}.";
@@ -388,7 +388,7 @@ namespace PgVectorDynamicRAG.Services
                 string tempFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + Path.GetExtension(file.FileName));
                 // string fileName = file.FileName;
                 
-                _logger.LogInformation("Creating temporary file for uploaded content: {TempFilePath}", tempFilePath);
+                _logger.LogInformation("Creating temporary file for uploaded content: {TempFilePath}", LogSanitizer.Clean(tempFilePath));
                 
                 // Save the uploaded file to the temp location
                 using (var stream = new FileStream(tempFilePath, FileMode.Create))
@@ -544,7 +544,7 @@ namespace PgVectorDynamicRAG.Services
                 string tempFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".txt");
                 string fileName = $"text_memory_{DateTime.UtcNow:yyyyMMdd_HHmmss}.txt";
                 
-                _logger.LogInformation("Creating temporary file for text content: {TempFilePath}", tempFilePath);
+                _logger.LogInformation("Creating temporary file for text content: {TempFilePath}", LogSanitizer.Clean(tempFilePath));
                 
                 // Save the content to the temp file
                 await File.WriteAllTextAsync(tempFilePath, content, cancellationToken);
@@ -631,7 +631,7 @@ namespace PgVectorDynamicRAG.Services
                     string embeddingServiceModality;
                     (embeddingServiceId, embeddingServiceModality) = await _schemaManagementService.getDefaultEmbeddingServiceDetails(collectionName);
                     string validatedEmbeddingModelName = await _schemaManagementService.getEmbeddingServiceName(embeddingServiceId);
-                    _logger.LogInformation($"Embedding model {validatedEmbeddingModelName} is valid for collection {collectionName}");
+                    _logger.LogInformation("Embedding model {ModelName} is valid for collection {CollectionName}", LogSanitizer.Clean(validatedEmbeddingModelName), LogSanitizer.Clean(collectionName));
                     
                     // Calculate the time window cutoff date if time-window filtering is enabled
                     DateTime? cutoffDate = null;
@@ -1319,7 +1319,7 @@ namespace PgVectorDynamicRAG.Services
                 string embeddingServiceName;
                 (embeddingServiceId, embeddingServiceModality) = await _schemaManagementService.getDefaultEmbeddingServiceDetails(collectionName);
                 embeddingServiceName = await _schemaManagementService.getEmbeddingServiceName(embeddingServiceId);
-                _logger.LogInformation($"Embedding model {embeddingServiceId} is valid for collection {collectionName}");
+                _logger.LogInformation("Embedding model {EmbeddingServiceId} is valid for collection {CollectionName}", LogSanitizer.Clean(embeddingServiceId), LogSanitizer.Clean(collectionName));
 
                 // Increase the number of results for individual searches to ensure we have enough candidates
                 int searchResultCount = (nResults ?? 10) * 3;
@@ -1431,7 +1431,7 @@ namespace PgVectorDynamicRAG.Services
                 string embeddingServiceId;
                 string embeddingServiceModality;
                 (embeddingServiceId, embeddingServiceModality) = await _schemaManagementService.getDefaultEmbeddingServiceDetails(collectionName);
-                _logger.LogInformation($"Embedding model {embeddingServiceId} is valid for collection {collectionName}");
+                _logger.LogInformation("Embedding model {EmbeddingServiceId} is valid for collection {CollectionName}", LogSanitizer.Clean(embeddingServiceId), LogSanitizer.Clean(collectionName));
                 
                 // Calculate the time window cutoff date if time-window filtering is enabled
                 DateTime? cutoffDate = null;
@@ -1562,7 +1562,7 @@ namespace PgVectorDynamicRAG.Services
             CancellationToken cancellationToken = default)
         {
             // Log that image search is not supported for text collections
-            _logger.LogWarning("Image search is not supported for text collection {CollectionName}", collectionName);
+            _logger.LogWarning("Image search is not supported for text collection {CollectionName}", LogSanitizer.Clean(collectionName));
             
             // Throw NotImplementedException to indicate this functionality is intentionally not supported
             // This will be caught by the controller and returned as a 501 Not Implemented response

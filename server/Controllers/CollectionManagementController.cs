@@ -16,14 +16,17 @@ namespace PgVectorDynamicRAG.Controllers
     public class CollectionManagementController : ControllerBase
     {
         private readonly CollectionManagementService _collectionManagementService;
+        private readonly ILogger<CollectionManagementController> _logger;
         /// <summary>
         /// Constructor for the CollectionManagementController
         /// </summary>
         /// <param name="collectionManagementService"></param>
         /// <param name="connectionFactory"></param>
-        public CollectionManagementController(CollectionManagementService collectionManagementService, IPostgresConnectionFactory connectionFactory)
+        /// <param name="logger"></param>
+        public CollectionManagementController(CollectionManagementService collectionManagementService, IPostgresConnectionFactory connectionFactory, ILogger<CollectionManagementController> logger)
         {
             _collectionManagementService = collectionManagementService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -159,8 +162,9 @@ namespace PgVectorDynamicRAG.Controllers
         {
             try
             {
-                Console.WriteLine("Received file upload request");
-                Console.WriteLine($"Request received: {System.Text.Json.JsonSerializer.Serialize(request)}");
+                // Log only bounded, sanitized metadata — never the whole request, which can carry
+                // file contents and other sensitive payload data.
+                _logger.LogInformation("Received file upload request for collection {CollectionName}", LogSanitizer.Clean(request.collectionName));
                 var startTime = DateTime.UtcNow;
 
                 Dictionary<string, object> result;
@@ -233,8 +237,9 @@ namespace PgVectorDynamicRAG.Controllers
         {
             try
             {
-                Console.WriteLine("Received text upload request");
-                Console.WriteLine($"Request received: {System.Text.Json.JsonSerializer.Serialize(request)}");
+                // Log only bounded, sanitized metadata — never the whole request, which carries the
+                // raw text content being ingested.
+                _logger.LogInformation("Received text upload request for collection {CollectionName}", LogSanitizer.Clean(request.collectionName));
                 var startTime = DateTime.UtcNow;
 
                 Dictionary<string, object> result;
@@ -315,7 +320,12 @@ namespace PgVectorDynamicRAG.Controllers
             }
             catch (Exception ex)
             {
-                return Problem($"Failed to remove the file: {request.pathInContainer}, from collection: {request.collectionName}, due to error: {ex.Message}");
+                // Log the details server-side; do not reflect raw request input back to the caller.
+                _logger.LogError(ex, "Failed to remove file {FileName} from collection {CollectionName}",
+                    LogSanitizer.Clean(request.pathInContainer), LogSanitizer.Clean(request.collectionName));
+                return Problem(detail: ex.Message, title: "Failed to remove the file from the collection",
+                    statusCode: StatusCodes.Status500InternalServerError,
+                    extensions: new Dictionary<string, object?> { { "success", false }, { "message", ex.Message } });
             }
         }
 
