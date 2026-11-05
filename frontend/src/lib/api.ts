@@ -13,16 +13,19 @@ import { API_ENDPOINTS, MOCK_CHAT_MODELS, MOCK_EMBEDDING_MODELS, MOCK_COLLECTION
 
 type RuntimeConfig = { 
   VITE_API_URL: string, 
-  VITE_OCP_APIM_SUBSCRIPTION_KEY?: string 
+  VITE_OCP_APIM_SUBSCRIPTION_KEY?: string,
+  VITE_API_KEY?: string
 };
 
 // Storage for runtime configuration values
 let runtimeBaseUrl: string | null = null;
 let runtimeSubscriptionKey: string | null = null;
+let runtimeApiKey: string | null = null;
 
 // Build-time fallbacks (used only if runtime config fails)
 const buildTimeBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5272';
 const buildTimeSubscriptionKey = import.meta.env.VITE_OCP_APIM_SUBSCRIPTION_KEY || null;
+const buildTimeApiKey = import.meta.env.VITE_API_KEY || null;
 
 // Initialize a promise to track when config is loaded
 const configLoadedPromise = new Promise<void>((resolve) => {
@@ -37,6 +40,7 @@ const configLoadedPromise = new Promise<void>((resolve) => {
       // Update runtime values from server config
       if (cfg.VITE_API_URL) runtimeBaseUrl = cfg.VITE_API_URL;
       if (cfg.VITE_OCP_APIM_SUBSCRIPTION_KEY) runtimeSubscriptionKey = cfg.VITE_OCP_APIM_SUBSCRIPTION_KEY;
+      if (cfg.VITE_API_KEY) runtimeApiKey = cfg.VITE_API_KEY;
       resolve();
     })
     .catch((error) => {
@@ -52,6 +56,10 @@ export const getBaseUrl = (): string => {
 
 export const getSubscriptionKey = (): string | null => {
   return runtimeSubscriptionKey ?? buildTimeSubscriptionKey;
+};
+
+export const getApiKey = (): string | null => {
+  return runtimeApiKey ?? buildTimeApiKey;
 };
 // // Define the base URL for API calls
 // const getBaseUrl = () => {
@@ -94,6 +102,12 @@ async function makeApiRequest<T>(
     headers['Ocp-Apim-Subscription-Key'] = currentSubscriptionKey;
   }
 
+  // Add server API key (required by the server for all endpoints)
+  const currentApiKey = getApiKey();
+  if (currentApiKey) {
+    headers['X-API-Key'] = currentApiKey;
+  }
+
   const response = await fetch(url.toString(), {
     method,
     headers,
@@ -125,6 +139,12 @@ export async function makeApiRequestWithFormData(
     const currentSubscriptionKey = getSubscriptionKey();
     if (currentSubscriptionKey) {
       headers['Ocp-Apim-Subscription-Key'] = currentSubscriptionKey;
+    }
+
+    // Add server API key (required by the server for all endpoints)
+    const currentApiKey = getApiKey();
+    if (currentApiKey) {
+      headers['X-API-Key'] = currentApiKey;
     }
     
     const response = await fetch(url.toString(), {

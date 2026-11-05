@@ -89,6 +89,16 @@ PORT=5272  # Optional, port for the application to listen on, defaults to 5272
 SSL_VERIFY=True  # Set to False to disable SSL verification (not recommended for production)
 ```
 
+### API Key Authentication (Required)
+Every server endpoint (REST controllers, MCP `/mcp` + `/sse`, etc.) requires an API key. Only `/healthz`,
+the `/` redirect and the Swagger UI/spec are reachable without one. The server will not start unless at least one key is configured.
+```bash
+API_KEY=your_server_api_key           # at least 32 characters, e.g. `openssl rand -hex 32`
+API_KEYS=key_one,key_two              # Optional, comma-separated list (use for key rotation); combined with API_KEY
+```
+Clients send the key in the `X-API-Key` header, or as `Authorization: Bearer <key>` (useful for MCP clients).
+In the Swagger UI, use the **Authorize** button to set the key. The frontend sends the key configured in its `VITE_API_KEY` variable.
+
 ### Blob Storage Configuration
 ```bash
 BLOB_STORAGE_CONNECTION_STRING=your_blob_storage_connection_string
@@ -118,6 +128,7 @@ AZURE_SUBSCRIPTION_ID=your_azure_subscription_id
 
 # Application configuration
 PORT=5272
+API_KEY=your_server_api_key_at_least_32_chars
 
 # PostgreSQL
 PG_HOST=localhost

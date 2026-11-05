@@ -27,7 +27,8 @@ app.get("/api/config", (_req: Request, res: Response) => {
   res.json({
     // list here every var you need client‐side
     VITE_API_URL: process.env.VITE_API_URL,
-    VITE_OCP_APIM_SUBSCRIPTION_KEY: process.env.VITE_OCP_APIM_SUBSCRIPTION_KEY
+    VITE_OCP_APIM_SUBSCRIPTION_KEY: process.env.VITE_OCP_APIM_SUBSCRIPTION_KEY,
+    VITE_API_KEY: process.env.VITE_API_KEY
   });
 });
 
