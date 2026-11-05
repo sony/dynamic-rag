@@ -16,6 +16,7 @@ using Amazon.Extensions.NETCore.Setup;
 // using Pgvector.Npgsql;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using PgVectorDynamicRAG.Authentication;
 
@@ -731,14 +732,6 @@ var app = builder.Build();
 // });
 
 
-// Enable swagger services
-app.UseSwagger();
-app.UseSwaggerUI(c =>
-{
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "PgVector Dotnet Launchpad v1.0.0");
-    c.RoutePrefix = string.Empty; // Set Swagger UI at the app's root
-});
-
 // configure controller routes
 // Add CORS middleware early in the pipeline
 app.UseCors();
@@ -746,6 +739,26 @@ app.UseCors();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Requests that don't match an endpoint (Swagger UI assets, the OpenAPI spec, unknown paths) bypass the
+// authorization fallback policy, so require a valid API key for them here. This protects Swagger.
+app.Use(async (context, next) =>
+{
+    if (context.GetEndpoint() == null && context.User.Identity?.IsAuthenticated != true)
+    {
+        await context.ChallengeAsync(ApiKeyAuthenticationHandler.SchemeName);
+        return;
+    }
+    await next();
+});
+
+// Enable swagger services (after authentication so the UI and spec require an API key)
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "PgVector Dotnet Launchpad v1.0.0");
+    c.RoutePrefix = string.Empty; // Set Swagger UI at the app's root
+});
 // app.UseHttpsRedirection();
 app.MapControllers();
 

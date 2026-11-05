@@ -13,3 +13,9 @@ module "dynamic-rag" {
   administrator_password     = var.administrator_password
 
 }
+
+output "dynamic_rag_server_api_key" {
+  description = "API key for direct (non-APIM) REST/MCP clients of the dynamic-rag server. Read with: terraform output -raw dynamic_rag_server_api_key"
+  value       = module.dynamic-rag.server_api_key
+  sensitive   = true
+}

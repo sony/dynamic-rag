@@ -20,14 +20,17 @@ namespace PgVectorDynamicRAG.Authentication
     }
 
     /// <summary>
-    /// Authenticates requests carrying a valid API key in the <c>X-API-Key</c> header
-    /// or in an <c>Authorization: Bearer &lt;key&gt;</c> header (for MCP clients that only support bearer tokens).
+    /// Authenticates requests carrying a valid API key in the <c>X-API-Key</c> header,
+    /// in an <c>Authorization: Bearer &lt;key&gt;</c> header (for MCP clients that only support bearer tokens),
+    /// or as the password of an <c>Authorization: Basic</c> header (so browsers can open the Swagger UI).
     /// </summary>
     public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthenticationOptions>
     {
         public const string SchemeName = "ApiKey";
         public const string HeaderName = "X-API-Key";
         private const string BearerPrefix = "Bearer ";
+        private const string BasicPrefix = "Basic ";
+        private const string BasicRealm = "Dynamic RAG";
 
         public ApiKeyAuthenticationHandler(
             IOptionsMonitor<ApiKeyAuthenticationOptions> options,
@@ -52,6 +55,13 @@ namespace PgVectorDynamicRAG.Authentication
                 {
                     providedKey = authorization.Substring(BearerPrefix.Length).Trim();
                 }
+                else if (authorization.StartsWith(BasicPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!TryGetBasicPassword(authorization.Substring(BasicPrefix.Length).Trim(), out providedKey))
+                    {
+                        return Task.FromResult(AuthenticateResult.Fail("Malformed Basic authorization header."));
+                    }
+                }
             }
 
             if (string.IsNullOrEmpty(providedKey))
@@ -74,8 +84,41 @@ namespace PgVectorDynamicRAG.Authentication
         protected override Task HandleChallengeAsync(AuthenticationProperties properties)
         {
             Response.StatusCode = StatusCodes.Status401Unauthorized;
-            Response.Headers.WWWAuthenticate = $"{SchemeName} header=\"{HeaderName}\"";
+            if (Context.GetEndpoint() == null)
+            {
+                // Non-endpoint requests are the Swagger UI / OpenAPI spec (served by middleware). Browsers cannot
+                // attach a custom header on navigation, so offer Basic auth: the browser prompts and the user
+                // enters the API key as the password (username is ignored).
+                Response.Headers.WWWAuthenticate = $"Basic realm=\"{BasicRealm}\", charset=\"UTF-8\"";
+            }
+            else
+            {
+                Response.Headers.WWWAuthenticate = $"{SchemeName} header=\"{HeaderName}\"";
+            }
             return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Extracts the password part of a Basic credential (<c>base64(username:password)</c>).
+        /// </summary>
+        public static bool TryGetBasicPassword(string encodedCredentials, out string? password)
+        {
+            password = null;
+            try
+            {
+                var decoded = Encoding.UTF8.GetString(Convert.FromBase64String(encodedCredentials));
+                var separator = decoded.IndexOf(':');
+                if (separator < 0)
+                {
+                    return false;
+                }
+                password = decoded.Substring(separator + 1);
+                return true;
+            }
+            catch (FormatException)
+            {
+                return false;
+            }
         }
 
         /// <summary>
