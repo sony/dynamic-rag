@@ -7,6 +7,7 @@ resource "azurerm_storage_account" "rag-storage-account" {
   account_tier              = "Standard"
   account_replication_type  = "LRS"
   account_kind              = "StorageV2"
+  min_tls_version           = "TLS1_2"
 
   blob_properties {
     delete_retention_policy {
@@ -17,6 +18,11 @@ resource "azurerm_storage_account" "rag-storage-account" {
 
 resource "azurerm_storage_container" "rag-storage-container" {
   name                  = "${var.name}-container-${var.env}"
+  storage_account_id    = azurerm_storage_account.rag-storage-account.id
   container_access_type = "private"
-  depends_on = [azurerm_storage_account.rag-storage-account]
+
+  lifecycle {
+    # Holds all ingested RAG files; never let a plan replace/delete it silently
+    prevent_destroy = true
+  }
 }
