@@ -102,6 +102,12 @@ namespace PgVectorDynamicRAG.Tests
                 });
                 
                 _client = _factory.CreateClient();
+                // All server endpoints require an API key (API_KEY / API_KEYS from the test .env)
+                var testApiKey = PgVectorDynamicRAG.Authentication.ApiKeyAuthenticationHandler.LoadKeysFromEnvironment().FirstOrDefault();
+                if (testApiKey != null)
+                {
+                    _client.DefaultRequestHeaders.Add(PgVectorDynamicRAG.Authentication.ApiKeyAuthenticationHandler.HeaderName, testApiKey);
+                }
             }
             finally
             {

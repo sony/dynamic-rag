@@ -16,6 +16,9 @@ using Amazon.Extensions.NETCore.Setup;
 // using Pgvector.Npgsql;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using PgVectorDynamicRAG.Authentication;
 
 // using Microsoft.AspNetCore.Builder;
 // using Microsoft.Extensions.DependencyInjection;
@@ -600,6 +603,33 @@ builder.Services
 // add controllers for respective services
 builder.Services.AddControllers();
 
+// API key authentication: every endpoint (REST controllers, MCP, minimal APIs) requires a valid key
+// unless explicitly marked AllowAnonymous. Keys come from API_KEYS (comma-separated) and/or API_KEY.
+const int MinApiKeyLength = 32;
+var apiKeys = ApiKeyAuthenticationHandler.LoadKeysFromEnvironment();
+if (apiKeys.Count == 0)
+{
+    throw new InvalidOperationException("API_KEY (or API_KEYS) environment variable is required. All server endpoints are protected by API key authentication.");
+}
+if (apiKeys.Any(k => k.Length < MinApiKeyLength))
+{
+    throw new InvalidOperationException($"Each configured API key must be at least {MinApiKeyLength} characters long.");
+}
+var apiKeyHashes = apiKeys.Select(ApiKeyAuthenticationHandler.HashKey).ToList();
+Console.WriteLine($"INFO: API key authentication enabled ({apiKeyHashes.Count} key(s) configured).");
+
+builder.Services
+    .AddAuthentication(ApiKeyAuthenticationHandler.SchemeName)
+    .AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>(
+        ApiKeyAuthenticationHandler.SchemeName,
+        options => options.KeyHashes = apiKeyHashes);
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder(ApiKeyAuthenticationHandler.SchemeName)
+        .RequireAuthenticatedUser()
+        .Build();
+});
+
 // add Swagger services to the app builder
 builder.Services.AddSwaggerGen(c =>
 {
@@ -609,6 +639,25 @@ builder.Services.AddSwaggerGen(c =>
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     c.IncludeXmlComments(xmlPath);
+
+    // Let the Swagger UI "Authorize" button send the API key on every request
+    c.AddSecurityDefinition(ApiKeyAuthenticationHandler.SchemeName, new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.ApiKey,
+        In = ParameterLocation.Header,
+        Name = ApiKeyAuthenticationHandler.HeaderName,
+        Description = "API key required for all endpoints."
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = ApiKeyAuthenticationHandler.SchemeName }
+            },
+            Array.Empty<string>()
+        }
+    });
 });
 
 // builder.Services.AddEndpointsApiExplorer();
@@ -683,20 +732,33 @@ var app = builder.Build();
 // });
 
 
-// Enable swagger services
+// configure controller routes
+// Add CORS middleware early in the pipeline
+app.UseCors();
+// app.UseCors("AllowFrontend");
+app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Requests that don't match an endpoint (Swagger UI assets, the OpenAPI spec, unknown paths) bypass the
+// authorization fallback policy, so require a valid API key for them here. This protects Swagger.
+app.Use(async (context, next) =>
+{
+    if (context.GetEndpoint() == null && context.User.Identity?.IsAuthenticated != true)
+    {
+        await context.ChallengeAsync(ApiKeyAuthenticationHandler.SchemeName);
+        return;
+    }
+    await next();
+});
+
+// Enable swagger services (after authentication so the UI and spec require an API key)
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "PgVector Dotnet Launchpad v1.0.0");
     c.RoutePrefix = string.Empty; // Set Swagger UI at the app's root
 });
-
-// configure controller routes
-// Add CORS middleware early in the pipeline
-app.UseCors();
-// app.UseCors("AllowFrontend");
-app.UseRouting();
-app.UseAuthorization();
 // app.UseHttpsRedirection();
 app.MapControllers();
 
@@ -728,9 +790,10 @@ app.MapGet("/", context =>
 {
     context.Response.Redirect("/index.html");
     return Task.CompletedTask;
-});
+}).AllowAnonymous();
 
-app.MapGet("/healthz", () => Results.Ok("OK"));
+// Liveness probe stays unauthenticated so container orchestrators can reach it
+app.MapGet("/healthz", () => Results.Ok("OK")).AllowAnonymous();
 
 app.MapMcp();
 

@@ -1,3 +1,12 @@
+#################################### SERVER API KEY ####################################
+
+# Shared key required by the server on every endpoint (X-API-Key header). APIM injects it on proxied
+# calls (see azurerm_api_management_backend below), so it is never sent to browsers via the frontend.
+resource "random_password" "server_api_key" {
+  length  = 64
+  special = false
+}
+
 #################################### AZURE CONTAINER APPLICATION FOR BACKEND ####################################
 
 resource "azurerm_container_app" "backend" {
@@ -12,6 +21,10 @@ resource "azurerm_container_app" "backend" {
   secret {
     name  = "registry-credentials"
     value = var.azurerm_container_registry.admin_password
+  }
+  secret {
+    name  = "server-api-key"
+    value = random_password.server_api_key.result
   }
 
   registry {
@@ -63,6 +76,10 @@ resource "azurerm_container_app" "backend" {
         name = "PORT"
         value = 5272
       }
+      env {
+        name        = "API_KEY"
+        secret_name = "server-api-key"
+      }
       env{
         name = "BLOB_STORAGE_CONNECTION_STRING"
         value = azurerm_storage_account.rag-storage-account.primary_connection_string
@@ -102,7 +119,8 @@ resource "azurerm_container_app" "backend" {
     }
   }
   lifecycle {
-    ignore_changes = [registry, secret]
+    # `secret` is managed by Terraform so the server-api-key secret is applied on existing apps too
+    ignore_changes = [registry]
   }
 
   depends_on = [azurerm_postgresql_flexible_server_database.db,
@@ -223,7 +241,8 @@ resource "azurerm_api_management_backend" "aca-apim-backend" {
 
   credentials {
     header = {
-        api-key = "a"
+        # Server requires this key on every endpoint; APIM adds it to every proxied request
+        "X-API-Key" = random_password.server_api_key.result
     }
   }
   tls {
